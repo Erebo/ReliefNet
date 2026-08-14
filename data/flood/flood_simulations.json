@@ -7,6 +7,9 @@
     "water_level_m_est": 2.4,
     "source_label": "SIMULATION",
     "is_active": true,
+    "center_lat": 22.9,
+    "center_lon": 91.4,
+    "zoom": 10.5,
     "geojson_polygon": {
       "type": "Feature",
       "geometry": {
@@ -42,10 +45,13 @@
     "name": "Lower Meghna Coastal Surge Inundation",
     "severity": "SEVERE",
     "affected_district": "Noakhali",
-    "affected_upazilas": ["Companiganj", "Senbagh"],
+    "affected_upazilas": ["Companiganj", "Senbagh", "Subarnachar"],
     "water_level_m_est": 1.6,
     "source_label": "SIMULATION",
     "is_active": true,
+    "center_lat": 22.76,
+    "center_lon": 91.22,
+    "zoom": 10.5,
     "geojson_polygon": {
       "type": "Feature",
       "geometry": {
@@ -68,6 +74,45 @@
         "severity": "SEVERE",
         "inundation_depth": "1.2 - 2.0 meters",
         "affected_population_est": 94000,
+        "is_mock": true
+      }
+    }
+  },
+  {
+    "name": "Sylhet Surma River Flash Flood",
+    "severity": "HIGH",
+    "affected_district": "Sylhet",
+    "affected_upazilas": ["Gowainghat", "Companiganj", "Jaintapur"],
+    "water_level_m_est": 3.1,
+    "source_label": "SIMULATION",
+    "is_active": true,
+    "center_lat": 25.05,
+    "center_lon": 91.92,
+    "zoom": 10.5,
+    "geojson_polygon": {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [91.800, 24.960],
+            [91.920, 24.950],
+            [92.050, 25.000],
+            [92.080, 25.100],
+            [92.010, 25.180],
+            [91.880, 25.170],
+            [91.780, 25.100],
+            [91.760, 25.020],
+            [91.800, 24.960]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Surma-Kushiyara Flash Inundation Zone",
+        "simulation_scenario": "Haor Flash Flood Simulation 2024",
+        "severity": "HIGH",
+        "inundation_depth": "2.5 - 4.0 meters",
+        "affected_population_est": 210000,
         "is_mock": true
       }
     }
