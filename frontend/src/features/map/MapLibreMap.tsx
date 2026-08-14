@@ -22,6 +22,9 @@ interface MapProps {
   initialLat?: number;
   initialLon?: number;
   initialZoom?: number;
+  initialScenario?: string;
+  initialInstId?: number;
+  initialArea?: string;
 }
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -136,9 +139,12 @@ const FLOOD_SCENARIOS = [
 type PanelMode = 'AREA_OVERVIEW' | 'INSTITUTION_DETAILS' | 'VERIFY_FORM' | 'ASSIGN_RELIEF' | 'TRACK_OPERATION';
 
 export const MapLibreMap: React.FC<MapProps> = ({
-  initialLat = 22.95,
-  initialLon = 91.41,
-  initialZoom = 10.5,
+  initialLat,
+  initialLon,
+  initialZoom,
+  initialScenario = 'feni',
+  initialInstId,
+  initialArea,
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreInstance | null>(null);
@@ -146,7 +152,7 @@ export const MapLibreMap: React.FC<MapProps> = ({
   const areaMarkerRef = useRef<Marker | null>(null);
 
   // Active flood scenario
-  const [activeScenarioId, setActiveScenarioId] = useState<string>('feni');
+  const [activeScenarioId, setActiveScenarioId] = useState<string>(initialScenario || 'feni');
   const [showScenarioPicker, setShowScenarioPicker] = useState(false);
 
   const activeScenario = FLOOD_SCENARIOS.find(s => s.id === activeScenarioId) || FLOOD_SCENARIOS[0];
@@ -156,15 +162,13 @@ export const MapLibreMap: React.FC<MapProps> = ({
   const [providers, setProviders] = useState<ReliefProvider[]>([]);
   const [activeAssignment, setActiveAssignment] = useState<ReliefAssignment | null>(null);
 
-  const [selectedArea] = useState<any>({
-    upazila: activeScenario.affected_upazilas[0],
-    district: activeScenario.district,
-    lat: activeScenario.center.lat,
-    lon: activeScenario.center.lon,
-  });
+  const initialTargetInst = initialInstId 
+    ? activeScenario.institutions.find(i => i.id === initialInstId)
+    : null;
 
-  const [selectedInst, setSelectedInst] = useState<any | null>(null);
-  const [panelMode, setPanelMode] = useState<PanelMode>('AREA_OVERVIEW');
+  const [selectedInst, setSelectedInst] = useState<any | null>(initialTargetInst || null);
+  const [targetedPlaceName, setTargetedPlaceName] = useState<string | undefined>(initialArea);
+  const [panelMode, setPanelMode] = useState<PanelMode>(initialTargetInst ? 'INSTITUTION_DETAILS' : 'AREA_OVERVIEW');
   const [isOverlayOpen, setIsOverlayOpen] = useState(true);
 
   // Form state
@@ -227,6 +231,10 @@ export const MapLibreMap: React.FC<MapProps> = ({
   useEffect(() => {
     if (!mapContainer.current) return;
 
+    const startLat = initialLat ?? (initialTargetInst ? initialTargetInst.latitude : activeScenario.center.lat);
+    const startLon = initialLon ?? (initialTargetInst ? initialTargetInst.longitude : activeScenario.center.lon);
+    const startZoom = initialZoom ?? (initialTargetInst ? 14.2 : activeScenario.center.zoom);
+
     const mapInstance = new maplibregl.Map({
       container: mapContainer.current,
       style: {
@@ -245,8 +253,8 @@ export const MapLibreMap: React.FC<MapProps> = ({
         },
         layers: [{ id: 'osm-layer', type: 'raster', source: 'osm-tiles', minzoom: 0, maxzoom: 19 }],
       },
-      center: [initialLon, initialLat],
-      zoom: initialZoom,
+      center: [startLon, startLat],
+      zoom: startZoom,
       attributionControl: false,
     });
 
@@ -256,10 +264,9 @@ export const MapLibreMap: React.FC<MapProps> = ({
       map.current = mapInstance;
 
       // Add flood polygon source + layers once
-      const initialScenario = FLOOD_SCENARIOS[0];
       mapInstance.addSource('flood-zones', {
         type: 'geojson',
-        data: { type: 'FeatureCollection', features: [initialScenario.polygon] },
+        data: { type: 'FeatureCollection', features: [activeScenario.polygon] },
       });
 
       mapInstance.addLayer({
@@ -275,6 +282,12 @@ export const MapLibreMap: React.FC<MapProps> = ({
         source: 'flood-zones',
         paint: { 'line-color': '#dc2626', 'line-width': 3 },
       });
+
+      if (initialTargetInst) {
+        setSelectedInst(initialTargetInst);
+        setPanelMode('INSTITUTION_DETAILS');
+        setIsOverlayOpen(true);
+      }
 
       mapInstance.on('click', 'flood-zones-fill', () => {
         setSelectedInst(null);
@@ -327,25 +340,47 @@ export const MapLibreMap: React.FC<MapProps> = ({
       .setLngLat([scenario.center.lon, scenario.center.lat])
       .addTo(map.current!);
 
-    // 🟢 Green dots for each institution
+    // 🟢 Green dots for each institution + 📍 Targeted Symbol when selected/pointed from SMS
     institutions.forEach(inst => {
       const el = document.createElement('div');
       const isSelected = selectedInst?.id === inst.id;
-      el.className = 'cursor-pointer group relative flex items-center justify-center p-2.5';
-      el.innerHTML = `
-        <div class="w-5 h-5 rounded-full bg-emerald-500 border-2 border-white shadow-xl group-hover:scale-150 group-hover:bg-emerald-600 transition-all flex items-center justify-center ${isSelected ? 'ring-4 ring-emerald-300 scale-125' : ''}">
-          <div class="w-1.5 h-1.5 rounded-full bg-white"></div>
-        </div>
-        <div class="absolute bottom-full mb-2 hidden group-hover:block bg-slate-900 text-white text-[11px] font-semibold px-2.5 py-1 rounded shadow-2xl whitespace-nowrap z-30 pointer-events-none">
-          ${inst.name}
-        </div>
-      `;
+      el.className = 'cursor-pointer group relative flex items-center justify-center p-3 z-10';
+      
+      if (isSelected) {
+        el.innerHTML = `
+          <!-- Pulsing Radar Waves -->
+          <div class="absolute w-14 h-14 rounded-full bg-red-500/30 animate-ping pointer-events-none"></div>
+          <div class="absolute w-9 h-9 rounded-full bg-red-500/50 animate-pulse pointer-events-none"></div>
+          
+          <!-- Floating Pointing Beacon Banner -->
+          <div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-red-600 border-2 border-white text-white text-[11px] font-black px-3.5 py-1 rounded-full shadow-2xl flex items-center gap-1.5 whitespace-nowrap animate-bounce z-40">
+            <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
+            <span>📍 AFFECTED PLACE: ${targetedPlaceName || inst.union || inst.upazila}</span>
+          </div>
+
+          <!-- Pin Symbol -->
+          <div class="w-6 h-6 rounded-full bg-red-600 border-2 border-white shadow-2xl flex items-center justify-center ring-4 ring-red-400/80 z-30 scale-125">
+            <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+          </div>
+        `;
+      } else {
+        el.innerHTML = `
+          <div class="w-5 h-5 rounded-full bg-emerald-500 border-2 border-white shadow-xl group-hover:scale-150 group-hover:bg-emerald-600 transition-all flex items-center justify-center">
+            <div class="w-1.5 h-1.5 rounded-full bg-white"></div>
+          </div>
+          <div class="absolute bottom-full mb-2 hidden group-hover:block bg-slate-900 text-white text-[11px] font-semibold px-2.5 py-1 rounded shadow-2xl whitespace-nowrap z-30 pointer-events-none">
+            ${inst.name}
+          </div>
+        `;
+      }
+
       el.addEventListener('click', (e) => {
         e.stopPropagation();
         setSelectedInst(inst);
+        setTargetedPlaceName(inst.union || inst.upazila || inst.name);
         setPanelMode('INSTITUTION_DETAILS');
         setIsOverlayOpen(true);
-        map.current?.flyTo({ center: [inst.longitude, inst.latitude], zoom: 13.5, essential: true });
+        map.current?.flyTo({ center: [inst.longitude, inst.latitude], zoom: 14.5, essential: true });
       });
 
       const marker = new maplibregl.Marker({ element: el })
@@ -518,6 +553,34 @@ export const MapLibreMap: React.FC<MapProps> = ({
           </div>
         </div>
       </div>
+
+      {/* ─── TOP-CENTER: Active Targeted Verification Point Banner ─── */}
+      {selectedInst && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-slate-900/95 backdrop-blur-md text-white border-2 border-red-500/80 px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-3.5 animate-in fade-in slide-in-from-top-2">
+          <span className="relative flex h-3 w-3 flex-shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+          </span>
+          <div className="text-xs text-left">
+            <span className="text-[9px] text-red-400 font-bold uppercase tracking-wider block">📍 Pointed From SMS Distress Signal</span>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="font-black text-sm text-white">{targetedPlaceName || selectedInst.union || selectedInst.upazila}</span>
+              <span className="text-slate-400 text-xs font-medium">({selectedInst.district})</span>
+            </div>
+            <span className="text-[10px] text-emerald-400 block mt-0.5 font-medium">
+              Verification Centre: <strong className="text-emerald-300 font-bold">{selectedInst.name}</strong>
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              map.current?.flyTo({ center: [selectedInst.longitude, selectedInst.latitude], zoom: 15, essential: true });
+            }}
+            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-bold flex items-center gap-1 transition-colors ml-1 cursor-pointer flex-shrink-0 shadow-sm"
+          >
+            <Crosshair className="w-3.5 h-3.5" /> Focus Pin
+          </button>
+        </div>
+      )}
 
       {/* ─── TOP-RIGHT: Floating Verification & Command Tab ─── */}
       {isOverlayOpen && (
