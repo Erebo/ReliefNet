@@ -185,6 +185,35 @@ export const MapLibreMap: React.FC<MapProps> = ({
   const [medQuantity, setMedQuantity] = useState(50);
   const [submittingAssign, setSubmittingAssign] = useState(false);
 
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
+
+  // Sync initial props from URL navigation
+  useEffect(() => {
+    if (initialScenario && initialScenario !== activeScenarioId) {
+      const scenario = FLOOD_SCENARIOS.find(s => s.id === initialScenario);
+      if (scenario) {
+        setActiveScenarioId(initialScenario);
+        setInstitutions(scenario.institutions);
+      }
+    }
+  }, [initialScenario]);
+
+  useEffect(() => {
+    if (initialInstId) {
+      const scen = FLOOD_SCENARIOS.find(s => s.id === (initialScenario || activeScenarioId)) || FLOOD_SCENARIOS[0];
+      const target = scen.institutions.find(i => i.id === initialInstId);
+      if (target) {
+        setSelectedInst(target);
+        setPanelMode('INSTITUTION_DETAILS');
+        setIsOverlayOpen(true);
+        if (initialArea) setTargetedPlaceName(initialArea);
+        if (map.current) {
+          map.current.flyTo({ center: [target.longitude, target.latitude], zoom: 14.5, essential: true });
+        }
+      }
+    }
+  }, [initialInstId, initialScenario, initialArea, isMapLoaded]);
+
   // Load providers from API
   useEffect(() => {
     apiClient.get<ReliefProvider[]>('/providers').then(r => {
@@ -201,6 +230,7 @@ export const MapLibreMap: React.FC<MapProps> = ({
     setShowScenarioPicker(false);
     setInstitutions(scenario.institutions);
     setSelectedInst(null);
+    setTargetedPlaceName(undefined);
     setPanelMode('AREA_OVERVIEW');
     setIsOverlayOpen(true);
 
@@ -262,6 +292,7 @@ export const MapLibreMap: React.FC<MapProps> = ({
 
     mapInstance.on('load', () => {
       map.current = mapInstance;
+      setIsMapLoaded(true);
 
       // Add flood polygon source + layers once
       mapInstance.addSource('flood-zones', {
@@ -308,7 +339,7 @@ export const MapLibreMap: React.FC<MapProps> = ({
 
   // ─── Render markers when scenario or selection changes ──────────────────────
   useEffect(() => {
-    if (!map.current) return;
+    if (!map.current || !isMapLoaded) return;
 
     // Clear old markers
     markersRef.current.forEach(m => m.remove());
@@ -340,27 +371,32 @@ export const MapLibreMap: React.FC<MapProps> = ({
       .setLngLat([scenario.center.lon, scenario.center.lat])
       .addTo(map.current!);
 
-    // 🟢 Green dots for each institution + 📍 Targeted Symbol when selected/pointed from SMS
+    // 🟢 Green dots for each institution + 🚨 BLINKING RED EMERGENCY LIGHT on Targeted Location
     institutions.forEach(inst => {
       const el = document.createElement('div');
       const isSelected = selectedInst?.id === inst.id;
-      el.className = 'cursor-pointer group relative flex items-center justify-center p-3 z-10';
+      el.className = 'cursor-pointer group relative flex items-center justify-center p-3 z-30';
       
       if (isSelected) {
         el.innerHTML = `
-          <!-- Pulsing Radar Waves -->
-          <div class="absolute w-14 h-14 rounded-full bg-red-500/30 animate-ping pointer-events-none"></div>
-          <div class="absolute w-9 h-9 rounded-full bg-red-500/50 animate-pulse pointer-events-none"></div>
-          
-          <!-- Floating Pointing Beacon Banner -->
-          <div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-red-600 border-2 border-white text-white text-[11px] font-black px-3.5 py-1 rounded-full shadow-2xl flex items-center gap-1.5 whitespace-nowrap animate-bounce z-40">
-            <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
-            <span>📍 AFFECTED PLACE: ${targetedPlaceName || inst.union || inst.upazila}</span>
-          </div>
+          <div class="relative flex items-center justify-center">
+            <!-- Blinking Red Pulse Waves (Radar Range) -->
+            <div class="absolute w-28 h-28 rounded-full bg-red-600/30 animate-ping pointer-events-none"></div>
+            <div class="absolute w-16 h-16 rounded-full bg-red-600/60 animate-pulse pointer-events-none"></div>
+            
+            <!-- Floating Pointing Beacon Banner -->
+            <div class="absolute -top-14 left-1/2 -translate-x-1/2 bg-red-600 border-2 border-white text-white text-[11px] font-black px-3.5 py-1.5 rounded-full shadow-2xl flex items-center gap-2 whitespace-nowrap animate-bounce z-40">
+              <span class="relative flex h-2.5 w-2.5">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-90"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
+              </span>
+              <span>🚨 ${targetedPlaceName || inst.union || inst.upazila || inst.name}</span>
+            </div>
 
-          <!-- Pin Symbol -->
-          <div class="w-6 h-6 rounded-full bg-red-600 border-2 border-white shadow-2xl flex items-center justify-center ring-4 ring-red-400/80 z-30 scale-125">
-            <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+            <!-- Blinking Red Light Strobe Core -->
+            <div class="relative w-8 h-8 rounded-full bg-red-600 border-2 border-white shadow-2xl flex items-center justify-center ring-4 ring-red-500 animate-pulse z-30">
+              <div class="w-3 h-3 rounded-full bg-white animate-ping"></div>
+            </div>
           </div>
         `;
       } else {
@@ -388,7 +424,7 @@ export const MapLibreMap: React.FC<MapProps> = ({
         .addTo(map.current!);
       markersRef.current.push(marker);
     });
-  }, [institutions, selectedInst, activeScenarioId]);
+  }, [isMapLoaded, institutions, selectedInst, activeScenarioId, targetedPlaceName]);
 
   // Submit Verification
   const handleConfirmVerification = async (e: React.FormEvent) => {
