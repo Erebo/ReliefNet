@@ -1,0 +1,14 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.git/
+.gitignore
+.env
+.pytest_cache/
+*.db
+*.sqlite

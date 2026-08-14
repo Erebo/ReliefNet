@@ -1,0 +1,75 @@
+[
+  {
+    "name": "Muhuri & Feni River Severe Basin Inundation",
+    "severity": "CRITICAL",
+    "affected_district": "Feni",
+    "affected_upazilas": ["Sonagazi", "Feni Sadar", "Parshuram", "Fulgazi", "Chhagalnaiya"],
+    "water_level_m_est": 2.4,
+    "source_label": "SIMULATION",
+    "is_active": true,
+    "geojson_polygon": {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [91.350, 22.780],
+            [91.420, 22.780],
+            [91.440, 22.840],
+            [91.460, 22.920],
+            [91.450, 23.080],
+            [91.480, 23.180],
+            [91.450, 23.250],
+            [91.400, 23.230],
+            [91.380, 23.120],
+            [91.360, 23.000],
+            [91.340, 22.890],
+            [91.350, 22.780]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Sonagazi-Muhuri Flash Inundation Zone",
+        "simulation_scenario": "2024 Basin Flood Simulation",
+        "severity": "CRITICAL",
+        "inundation_depth": "1.8 - 3.2 meters",
+        "affected_population_est": 185000,
+        "is_mock": true
+      }
+    }
+  },
+  {
+    "name": "Lower Meghna Coastal Surge Inundation",
+    "severity": "SEVERE",
+    "affected_district": "Noakhali",
+    "affected_upazilas": ["Companiganj", "Senbagh"],
+    "water_level_m_est": 1.6,
+    "source_label": "SIMULATION",
+    "is_active": true,
+    "geojson_polygon": {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [91.150, 22.650],
+            [91.320, 22.650],
+            [91.350, 22.760],
+            [91.280, 22.880],
+            [91.180, 22.850],
+            [91.120, 22.720],
+            [91.150, 22.650]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Companiganj Tidal Inundation",
+        "simulation_scenario": "Coastal Surge Simulation",
+        "severity": "SEVERE",
+        "inundation_depth": "1.2 - 2.0 meters",
+        "affected_population_est": 94000,
+        "is_mock": true
+      }
+    }
+  }
+]

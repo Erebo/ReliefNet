@@ -1,0 +1,320 @@
+{
+  "divisions": [
+    {
+      "name": "Chittagong",
+      "bangla_name": "চট্টগ্রাম",
+      "pcode": "BD20",
+      "center_lat": 22.3569,
+      "center_lon": 91.7832,
+      "bounding_box": [90.5, 20.7, 92.7, 24.2],
+      "population_est": 33202326
+    },
+    {
+      "name": "Dhaka",
+      "bangla_name": "ঢাকা",
+      "pcode": "BD30",
+      "center_lat": 23.8103,
+      "center_lon": 90.4125,
+      "bounding_box": [89.3, 22.8, 91.2, 24.9],
+      "population_est": 44215107
+    },
+    {
+      "name": "Sylhet",
+      "bangla_name": "সিলেট",
+      "pcode": "BD60",
+      "center_lat": 24.8949,
+      "center_lon": 91.8687,
+      "bounding_box": [90.9, 23.9, 92.5, 25.2],
+      "population_est": 12102325
+    },
+    {
+      "name": "Khulna",
+      "bangla_name": "খুলনা",
+      "pcode": "BD40",
+      "center_lat": 22.8456,
+      "center_lon": 89.5403,
+      "bounding_box": [88.5, 21.6, 89.9, 24.2],
+      "population_est": 17416645
+    },
+    {
+      "name": "Rajshahi",
+      "bangla_name": "রাজশাহী",
+      "pcode": "BD50",
+      "center_lat": 24.3745,
+      "center_lon": 88.6042,
+      "bounding_box": [88.0, 23.8, 89.8, 25.2],
+      "population_est": 20353119
+    },
+    {
+      "name": "Rangpur",
+      "bangla_name": "রংপুর",
+      "pcode": "BD55",
+      "center_lat": 25.7439,
+      "center_lon": 89.2752,
+      "bounding_box": [88.0, 25.0, 89.9, 26.6],
+      "population_est": 17610956
+    },
+    {
+      "name": "Barisal",
+      "bangla_name": "বরিশাল",
+      "pcode": "BD10",
+      "center_lat": 22.7010,
+      "center_lon": 90.3535,
+      "bounding_box": [89.8, 21.8, 91.0, 23.1],
+      "population_est": 9100102
+    },
+    {
+      "name": "Mymensingh",
+      "bangla_name": "ময়মনসিংহ",
+      "pcode": "BD45",
+      "center_lat": 24.7471,
+      "center_lon": 90.4203,
+      "bounding_box": [89.6, 24.1, 91.2, 25.2],
+      "population_est": 12225498
+    }
+  ],
+  "districts": [
+    {
+      "name": "Feni",
+      "bangla_name": "ফেনী",
+      "division": "Chittagong",
+      "pcode": "BD2030",
+      "center_lat": 23.0159,
+      "center_lon": 91.3976,
+      "bounding_box": [91.25, 22.75, 91.58, 23.28],
+      "population_est": 1648896
+    },
+    {
+      "name": "Noakhali",
+      "bangla_name": "নোয়াখালী",
+      "division": "Chittagong",
+      "pcode": "BD2075",
+      "center_lat": 22.8696,
+      "center_lon": 91.0993,
+      "bounding_box": [90.88, 22.12, 91.35, 23.15],
+      "population_est": 3625252
+    },
+    {
+      "name": "Comilla",
+      "bangla_name": "কুমিল্লা",
+      "division": "Chittagong",
+      "pcode": "BD2019",
+      "center_lat": 23.4682,
+      "center_lon": 91.1788,
+      "bounding_box": [90.65, 23.05, 91.45, 23.82],
+      "population_est": 5602625
+    },
+    {
+      "name": "Chittagong",
+      "bangla_name": "চট্টগ্রাম",
+      "division": "Chittagong",
+      "pcode": "BD2015",
+      "center_lat": 22.3569,
+      "center_lon": 91.7832,
+      "bounding_box": [91.4, 21.8, 92.4, 23.0],
+      "population_est": 9169464
+    },
+    {
+      "name": "Sylhet",
+      "bangla_name": "সিলেট",
+      "division": "Sylhet",
+      "pcode": "BD6091",
+      "center_lat": 24.8949,
+      "center_lon": 91.8687,
+      "bounding_box": [91.5, 24.5, 92.5, 25.2],
+      "population_est": 3857037
+    },
+    {
+      "name": "Sunamganj",
+      "bangla_name": "সুনামগঞ্জ",
+      "division": "Sylhet",
+      "pcode": "BD6090",
+      "center_lat": 25.0658,
+      "center_lon": 91.3950,
+      "bounding_box": [90.9, 24.6, 91.7, 25.3],
+      "population_est": 2695495
+    },
+    {
+      "name": "Dhaka",
+      "bangla_name": "ঢাকা",
+      "division": "Dhaka",
+      "pcode": "BD3026",
+      "center_lat": 23.8103,
+      "center_lon": 90.4125,
+      "bounding_box": [90.2, 23.5, 90.6, 24.0],
+      "population_est": 14734025
+    },
+    {
+      "name": "Kurigram",
+      "bangla_name": "কুড়িগ্রাম",
+      "division": "Rangpur",
+      "pcode": "BD5549",
+      "center_lat": 25.8054,
+      "center_lon": 89.6362,
+      "bounding_box": [89.3, 25.3, 89.9, 26.2],
+      "population_est": 2329161
+    }
+  ],
+  "upazilas": [
+    {
+      "name": "Sonagazi",
+      "bangla_name": "সোনাগাজী",
+      "district": "Feni",
+      "division": "Chittagong",
+      "pcode": "BD203094",
+      "center_lat": 22.8500,
+      "center_lon": 91.3900,
+      "bounding_box": [91.31, 22.74, 91.46, 22.95],
+      "population_est": 290000
+    },
+    {
+      "name": "Feni Sadar",
+      "bangla_name": "ফেনী সদর",
+      "district": "Feni",
+      "division": "Chittagong",
+      "pcode": "BD203029",
+      "center_lat": 23.0186,
+      "center_lon": 91.3966,
+      "bounding_box": [91.32, 22.94, 91.48, 23.12],
+      "population_est": 512000
+    },
+    {
+      "name": "Chhagalnaiya",
+      "bangla_name": "ছাগলনাইয়া",
+      "district": "Feni",
+      "division": "Chittagong",
+      "pcode": "BD203014",
+      "center_lat": 23.0361,
+      "center_lon": 91.5186,
+      "bounding_box": [91.45, 22.95, 91.58, 23.13],
+      "population_est": 201000
+    },
+    {
+      "name": "Parshuram",
+      "bangla_name": "পরশুরাম",
+      "district": "Feni",
+      "division": "Chittagong",
+      "pcode": "BD203080",
+      "center_lat": 23.2144,
+      "center_lon": 91.4394,
+      "bounding_box": [91.38, 23.14, 91.52, 23.28],
+      "population_est": 115000
+    },
+    {
+      "name": "Fulgazi",
+      "bangla_name": "ফুলগাজী",
+      "district": "Feni",
+      "division": "Chittagong",
+      "pcode": "BD203035",
+      "center_lat": 23.1283,
+      "center_lon": 91.4428,
+      "bounding_box": [91.37, 23.08, 91.50, 23.19],
+      "population_est": 133000
+    },
+    {
+      "name": "Daganbhuiyan",
+      "bangla_name": "দাগনভূঞা",
+      "district": "Feni",
+      "division": "Chittagong",
+      "pcode": "BD203025",
+      "center_lat": 22.9372,
+      "center_lon": 91.3061,
+      "bounding_box": [91.25, 22.86, 91.36, 23.05],
+      "population_est": 255000
+    },
+    {
+      "name": "Companiganj",
+      "bangla_name": "কোম্পানীগঞ্জ",
+      "district": "Noakhali",
+      "division": "Chittagong",
+      "pcode": "BD207521",
+      "center_lat": 22.7667,
+      "center_lon": 91.2833,
+      "bounding_box": [91.18, 22.62, 91.38, 22.88],
+      "population_est": 275000
+    },
+    {
+      "name": "Senbagh",
+      "bangla_name": "সেনবাগ",
+      "district": "Noakhali",
+      "division": "Chittagong",
+      "pcode": "BD207583",
+      "center_lat": 22.9833,
+      "center_lon": 91.2333,
+      "bounding_box": [91.17, 22.90, 91.31, 23.06],
+      "population_est": 282000
+    },
+    {
+      "name": "Begumganj",
+      "bangla_name": "বেগমগঞ্জ",
+      "district": "Noakhali",
+      "division": "Chittagong",
+      "pcode": "BD207507",
+      "center_lat": 22.9500,
+      "center_lon": 91.1000,
+      "bounding_box": [91.00, 22.85, 91.20, 23.05],
+      "population_est": 568000
+    },
+    {
+      "name": "Chauddagram",
+      "bangla_name": "চৌদ্দগ্রাম",
+      "district": "Comilla",
+      "division": "Chittagong",
+      "pcode": "BD201931",
+      "center_lat": 23.2167,
+      "center_lon": 91.3167,
+      "bounding_box": [91.22, 23.08, 91.42, 23.36],
+      "population_est": 443000
+    }
+  ],
+  "unions": [
+    {
+      "name": "Sonagazi Sadar",
+      "bangla_name": "সোনাগাজী সদর",
+      "upazila": "Sonagazi",
+      "district": "Feni",
+      "center_lat": 22.8520,
+      "center_lon": 91.3920
+    },
+    {
+      "name": "Char Chandia",
+      "bangla_name": "চর চান্দিয়া",
+      "upazila": "Sonagazi",
+      "district": "Feni",
+      "center_lat": 22.8210,
+      "center_lon": 91.3780
+    },
+    {
+      "name": "Char Majlishpur",
+      "bangla_name": "চর মজলিশপুর",
+      "upazila": "Sonagazi",
+      "district": "Feni",
+      "center_lat": 22.8850,
+      "center_lon": 91.3980
+    },
+    {
+      "name": "Char Dorbesh",
+      "bangla_name": "চর দরবেশ",
+      "upazila": "Sonagazi",
+      "district": "Feni",
+      "center_lat": 22.8330,
+      "center_lon": 91.4120
+    },
+    {
+      "name": "Motobi",
+      "bangla_name": "মতিবী",
+      "upazila": "Sonagazi",
+      "district": "Feni",
+      "center_lat": 22.8710,
+      "center_lon": 91.3650
+    },
+    {
+      "name": "Mangalkandi",
+      "bangla_name": "মঙ্গলকান্দি",
+      "upazila": "Sonagazi",
+      "district": "Feni",
+      "center_lat": 22.8950,
+      "center_lon": 91.3750
+    }
+  ]
+}

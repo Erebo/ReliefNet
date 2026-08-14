@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: reliefnet-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: reliefnet
+      POSTGRES_PASSWORD: reliefnet123
+      POSTGRES_DB: reliefnet_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reliefnet -d reliefnet_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - reliefnet-net
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: reliefnet-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://reliefnet:reliefnet123@db:5432/reliefnet_db
+      ENVIRONMENT: production
+      PORT: 8000
+      HOST: 0.0.0.0
+      CORS_ORIGINS: '["http://localhost:5173", "http://localhost:80", "http://localhost:3000", "http://localhost"]'
+      JWT_SECRET: super-secret-reliefnet-jwt-key-change-in-production-min-32-chars
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - reliefnet-net
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: reliefnet-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:80"
+    networks:
+      - reliefnet-net
+
+volumes:
+  db_data:
+
+networks:
+  reliefnet-net:
+    driver: bridge
