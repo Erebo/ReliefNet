@@ -7,6 +7,8 @@ import {
   Anchor, X, ExternalLink
 } from 'lucide-react';
 
+import { useScenario } from '../context/ScenarioContext';
+
 // ─── Flood Scenarios ──────────────────────────────────────────────────────────
 const FLOOD_SCENARIOS = [
   {
@@ -197,8 +199,7 @@ const STATUS_CONFIG = {
 
 export const OverviewPage: React.FC = () => {
   const navigate = useNavigate();
-  const [activeId, setActiveId] = useState('feni');
-  const [showPicker, setShowPicker] = useState(false);
+  const { activeScenarioId } = useScenario();
 
   // Live state
   const [smsData, setSmsData] = useState(INITIAL_SMS);
@@ -213,9 +214,9 @@ export const OverviewPage: React.FC = () => {
   const [errorModal, setErrorModal] = useState<{ title: string; type: string; message: string; resolution: string } | null>(null);
   const [fallbackToast, setFallbackToast] = useState<string | null>(null);
 
-  const scenario = FLOOD_SCENARIOS.find(s => s.id === activeId) || FLOOD_SCENARIOS[0];
-  const smsMessages = smsData[activeId] || [];
-  const reliefList   = reliefData[activeId] || [];
+  const scenario = FLOOD_SCENARIOS.find(s => s.id === activeScenarioId) || FLOOD_SCENARIOS[0];
+  const smsMessages = smsData[activeScenarioId] || [];
+  const reliefList   = reliefData[activeScenarioId] || [];
 
   const pendingCount  = smsMessages.filter(m => m.status === 'PENDING').length;
   const verifiedCount = smsMessages.filter(m => m.status === 'VERIFIED').length;
@@ -224,7 +225,7 @@ export const OverviewPage: React.FC = () => {
 
   // Jump to exact location and institution on the map
   const handleJumpToLocation = (msg: any) => {
-    navigate(`/map?scenario=${activeId}&lat=${msg.lat}&lon=${msg.lon}&zoom=14.5&instId=${msg.institutionId}&area=${encodeURIComponent(msg.area)}`);
+    navigate(`/map?scenario=${activeScenarioId}&lat=${msg.lat}&lon=${msg.lon}&zoom=14.5&instId=${msg.institutionId}&area=${encodeURIComponent(msg.area)}`);
   };
 
   // 1. Multithreaded Ingestion Simulation
@@ -261,20 +262,20 @@ export const OverviewPage: React.FC = () => {
       const newMsg = {
         id: Date.now(),
         from: '+880 1799-445566',
-        area: 'Sonagazi Model Area',
+        area: `${scenario.district} Flood Sector`,
         time: 'Just now',
         message: 'Water reached rooftop. 12 people trapped on roof. Need immediate rescue boat.',
         needs: ['Boat Evacuation', 'Food'],
         status: 'PENDING',
-        lat: 22.8450,
-        lon: 91.3890,
-        institutionId: 3,
-        institutionName: 'Sonagazi Model High School',
+        lat: scenario.lat,
+        lon: scenario.lon,
+        institutionId: 1,
+        institutionName: 'Local Response Centre',
       };
 
       setSmsData(prev => ({
         ...prev,
-        [activeId]: [newMsg, ...(prev[activeId] || [])]
+        [activeScenarioId]: [newMsg, ...(prev[activeScenarioId] || [])]
       }));
     }, 1800);
   };
@@ -299,11 +300,11 @@ export const OverviewPage: React.FC = () => {
   const handleVerifyMessage = (id: number, areaName: string, lat?: number, lon?: number, instId?: number) => {
     setSmsData(prev => ({
       ...prev,
-      [activeId]: prev[activeId].map(m => m.id === id ? { ...m, status: 'VERIFIED' } : m)
+      [activeScenarioId]: prev[activeScenarioId].map(m => m.id === id ? { ...m, status: 'VERIFIED' } : m)
     }));
 
     // Add to Relief Need List
-    const existing = reliefData[activeId].find(r => r.area === areaName);
+    const existing = reliefData[activeScenarioId]?.find(r => r.area === areaName);
     if (!existing) {
       const newNeed = {
         id: Date.now(),
@@ -312,13 +313,13 @@ export const OverviewPage: React.FC = () => {
         needs: ['Emergency Food', 'Clean Water'],
         status: 'AWAITING_RELIEF',
         relief_by: null,
-        lat: lat || 22.8485,
-        lon: lon || 91.3912,
+        lat: lat || scenario.lat,
+        lon: lon || scenario.lon,
         institutionId: instId || 1
       };
       setReliefData(prev => ({
         ...prev,
-        [activeId]: [newNeed, ...prev[activeId]]
+        [activeScenarioId]: [newNeed, ...(prev[activeScenarioId] || [])]
       }));
     }
   };
@@ -406,35 +407,23 @@ export const OverviewPage: React.FC = () => {
 
       {/* ── Scenario Picker & Error Handling Test Strip ─────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Scenario Picker */}
-        <div className="relative">
+        {/* Active Flood Scenario Status (Synchronized with Response Map) */}
+        <div className={`flex items-center gap-3 px-4 py-2.5 bg-white border-2 ${scenario.border} rounded-xl shadow-sm`}>
+          <span className={`w-2.5 h-2.5 rounded-full ${scenario.badge} animate-pulse flex-shrink-0`} />
+          <div className="min-w-0">
+            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Active Response Zone</div>
+            <div className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+              <span>{scenario.name}</span>
+              <span className="text-[10px] text-slate-500 font-medium">({scenario.district} · {scenario.severity})</span>
+            </div>
+          </div>
           <button
-            onClick={() => setShowPicker(p => !p)}
-            className={`flex items-center gap-3 px-4 py-2.5 bg-white border-2 ${scenario.border} rounded-xl shadow-sm hover:shadow-md transition-all text-left`}
+            onClick={() => navigate('/map')}
+            className="ml-2 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer flex-shrink-0"
+            title="Change active flood zone on Response Map"
           >
-            <span className={`w-2.5 h-2.5 rounded-full ${scenario.badge} animate-pulse flex-shrink-0`} />
-            <div className="min-w-0">
-              <div className="text-xs font-black text-slate-900">{scenario.name}</div>
-              <div className="text-[10px] text-slate-500">{scenario.district} · {scenario.severity}</div>
-            </div>
-            <ChevronDown className={`w-3.5 h-3.5 text-slate-400 ml-2 transition-transform ${showPicker ? 'rotate-180' : ''}`} />
+            Change on Map <ExternalLink className="w-3 h-3 text-slate-500" />
           </button>
-
-          {showPicker && (
-            <div className="absolute top-full mt-1 left-0 z-30 w-80 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden">
-              {FLOOD_SCENARIOS.map(s => (
-                <button key={s.id} onClick={() => { setActiveId(s.id); setShowPicker(false); }}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${s.id === activeId ? 'bg-slate-900 text-white' : 'hover:bg-slate-50 text-slate-800'}`}>
-                  <span className={`w-2 h-2 rounded-full ${s.badge} flex-shrink-0`} />
-                  <div>
-                    <div className="text-xs font-bold">{s.name}</div>
-                    <div className={`text-[10px] ${s.id === activeId ? 'text-slate-300' : 'text-slate-500'}`}>{s.district} · {s.severity}</div>
-                  </div>
-                  {s.id === activeId && <CheckCircle2 className="w-4 h-4 text-emerald-400 ml-auto" />}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Live Java Exception Simulators */}
@@ -597,7 +586,7 @@ export const OverviewPage: React.FC = () => {
                 <div className="col-span-4 flex items-center gap-2 min-w-0">
                   <span className={`w-2 h-2 rounded-full ${sc.dot} flex-shrink-0`} />
                   <button
-                    onClick={() => row.lat && row.lon && navigate(`/map?scenario=${activeId}&lat=${row.lat}&lon=${row.lon}&zoom=14.5&instId=${row.institutionId}`)}
+                    onClick={() => row.lat && row.lon && navigate(`/map?scenario=${activeScenarioId}&lat=${row.lat}&lon=${row.lon}&zoom=14.5&instId=${row.institutionId}&area=${encodeURIComponent(row.area)}`)}
                     className="font-bold text-slate-900 hover:text-red-600 truncate text-left cursor-pointer transition-colors"
                   >
                     {row.area}

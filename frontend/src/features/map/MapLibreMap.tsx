@@ -17,6 +17,7 @@ import {
 import { Institution, FloodSimulation, ReliefAssignment, ReliefProvider } from '../../types';
 import { apiClient } from '../../api/client';
 import { StatusBadge } from '../../components/ui/StatusBadge';
+import { useScenario } from '../../context/ScenarioContext';
 
 interface MapProps {
   initialLat?: number;
@@ -142,17 +143,16 @@ export const MapLibreMap: React.FC<MapProps> = ({
   initialLat,
   initialLon,
   initialZoom,
-  initialScenario = 'feni',
+  initialScenario,
   initialInstId,
   initialArea,
 }) => {
+  const { activeScenarioId, setActiveScenarioId } = useScenario();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreInstance | null>(null);
   const markersRef = useRef<Marker[]>([]);
   const areaMarkerRef = useRef<Marker | null>(null);
 
-  // Active flood scenario
-  const [activeScenarioId, setActiveScenarioId] = useState<string>(initialScenario || 'feni');
   const [showScenarioPicker, setShowScenarioPicker] = useState(false);
 
   const activeScenario = FLOOD_SCENARIOS.find(s => s.id === activeScenarioId) || FLOOD_SCENARIOS[0];
