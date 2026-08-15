@@ -9,6 +9,7 @@ import { OverviewPage } from './pages/OverviewPage';
 import { MapPage } from './pages/MapPage';
 import { OperationsPage } from './pages/OperationsPage';
 import { LoginPage } from './pages/LoginPage';
+import { AboutPage } from './pages/AboutPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,6 +34,7 @@ export const App: React.FC = () => {
                 <Route path="map" element={<MapPage />} />
                 <Route path="overview" element={<OverviewPage />} />
                 <Route path="operations" element={<OperationsPage />} />
+                <Route path="about" element={<AboutPage />} />
                 <Route path="*" element={<Navigate to="/map" replace />} />
               </Route>
             </Routes>

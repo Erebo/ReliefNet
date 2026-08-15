@@ -34,6 +34,7 @@ export const OperationsPage: React.FC = () => {
   const [newContactName, setNewContactName] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newEmail, setNewEmail] = useState('');
+  const [newProviderType, setNewProviderType] = useState<'GOV' | 'INGO' | 'LOCAL_NGO' | 'VOLUNTEER'>('LOCAL_NGO');
 
   // Quick Dispatch Modal
   const [dispatchModalOpen, setDispatchModalOpen] = useState(false);
@@ -87,6 +88,7 @@ export const OperationsPage: React.FC = () => {
     try {
       await apiClient.post('/providers', {
         name: newOrgName,
+        type: newProviderType,
         contact_person: newContactName,
         phone: newPhone,
         email: newEmail,
@@ -98,6 +100,8 @@ export const OperationsPage: React.FC = () => {
       setNewOrgName('');
       setNewContactName('');
       setNewPhone('');
+      setNewEmail('');
+      setNewProviderType('LOCAL_NGO');
       fetchData();
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to register provider');
@@ -477,6 +481,20 @@ export const OperationsPage: React.FC = () => {
               placeholder="e.g. Bangladesh Red Crescent Society - Feni Unit"
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900"
             />
+          </div>
+          <div>
+            <label className="block text-slate-700 font-bold text-xs mb-1">Organization Type</label>
+            <select
+              required
+              value={newProviderType}
+              onChange={(e) => setNewProviderType(e.target.value as any)}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 bg-white"
+            >
+              <option value="GOV">Government (GOV)</option>
+              <option value="INGO">International NGO (INGO)</option>
+              <option value="LOCAL_NGO">Local NGO</option>
+              <option value="VOLUNTEER">Volunteer Group</option>
+            </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

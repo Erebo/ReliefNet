@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, User, LogOut, ChevronRight, Map, LayoutDashboard, Truck } from 'lucide-react';
+import { Search, User, LogOut, ChevronRight, Map, LayoutDashboard, Truck, BookOpen } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { apiClient } from '../../api/client';
 import { SearchResult } from '../../types';
@@ -37,6 +37,7 @@ export const Navbar: React.FC = () => {
     { label: 'Response Map', path: '/map', icon: Map },
     { label: 'Overview', path: '/overview', icon: LayoutDashboard },
     { label: 'Relief Operations', path: '/operations', icon: Truck },
+    { label: 'About', path: '/about', icon: BookOpen },
   ];
 
   return (
