@@ -30,11 +30,28 @@ const CONCEPTS: Concept[] = [
     borderColor: 'border-indigo-200',
     textColor: 'text-indigo-700',
     badgeColor: 'bg-indigo-100 text-indigo-700 border-indigo-200',
-    summary: 'Data and behaviour are bundled together inside a class. Internal state is hidden and only accessible through a controlled interface.',
-    file: 'backend/app/models/report.py',
-    element: 'class CommunityReport',
-    description: 'All report fields are declared as SQLAlchemy Column descriptors — the ORM acts as the encapsulation boundary. External code cannot directly mutate the status field; changes must go through API endpoints that enforce the UNVERIFIED → VERIFIED → RELIEF_ASSIGNED lifecycle.',
-    snippet: 'class CommunityReport(Base):\n    __tablename__ = "community_reports"\n\n    status  = Column(Enum(ReportStatus),\n                     default=ReportStatus.UNVERIFIED,\n                     nullable=False, index=True)\n    severity = Column(Enum(SeverityLevel),\n                      default=SeverityLevel.MODERATE)\n    # Only writable via API validation layer',
+    summary: 'Internal state is kept protected (prefixed with _), preventing direct external tampering. State transitions and validation rules are strictly enforced through class methods.',
+    file: 'Domain Model: SMS Distress Report',
+    element: 'class SMSReport',
+    description: 'The SMSReport class protects its internal _status and _verified_households attributes. Callers cannot mutate status directly; they must call mark_verified(), which validates input boundaries and controls the state lifecycle.',
+    snippet: `class SMSReport:
+    def __init__(self, phone: str, message: str):
+        if not phone.startswith("+880"):
+            raise ValueError("Invalid Bangladesh phone number format")
+        self.phone = phone
+        self.message = message
+        self._status = "PENDING"          # Protected internal state
+        self._verified_households = 0
+
+    def mark_verified(self, households: int):
+        if households <= 0:
+            raise ValueError("Households count must be greater than zero")
+        self._verified_households = households
+        self._status = "VERIFIED"
+
+    @property
+    def status(self) -> str:
+        return self._status`,
   },
   {
     id: 'inheritance',
@@ -45,11 +62,27 @@ const CONCEPTS: Concept[] = [
     borderColor: 'border-emerald-200',
     textColor: 'text-emerald-700',
     badgeColor: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    summary: 'All database model classes inherit from a shared SQLAlchemy declarative base, acquiring connection management, query building, and relationship tracking without reimplementing them.',
-    file: 'backend/app/models/institution.py',
-    element: 'class Institution(Base)',
-    description: 'Institution, CommunityReport, ReliefAssignment, and every other model extend SQLAlchemy\'s Base class. Base provides __init__, __repr__, session binding, metadata registration, and the full ORM query interface — inherited transparently by all models.',
-    snippet: 'from backend.app.core.database import Base\n\nclass Institution(Base):\n    __tablename__ = "institutions"\n    id       = Column(Integer, primary_key=True)\n    name     = Column(String(255), nullable=False)\n    type     = Column(Enum(InstitutionType))\n    # Inherits: session, query(), metadata, relationships',
+    summary: 'Subclasses inherit shared attributes and shelter methods from a parent Institution class, promoting code reuse while adding domain-specific fields and behaviors.',
+    file: 'Domain Model: Shelter Hierarchy',
+    element: 'class School(Institution) & College(Institution)',
+    description: 'School and College inherit common attributes (name, upazila, capacity) and the open_as_shelter() method from the Institution base class using super().__init__(), while adding classroom conversion logic unique to schools.',
+    snippet: `class Institution:
+    def __init__(self, name: str, upazila: str, capacity: int):
+        self.name = name
+        self.upazila = upazila
+        self.capacity = capacity
+
+    def open_as_shelter(self):
+        print(f"Opened {self.name} as shelter for {self.capacity} persons")
+
+# Subclass inherits from Institution base
+class School(Institution):
+    def __init__(self, name: str, upazila: str, capacity: int, classrooms: int):
+        super().__init__(name, upazila, capacity)  # Inherit parent attributes
+        self.classrooms = classrooms
+
+    def convert_classrooms(self):
+        print(f"Converted {self.classrooms} classrooms into emergency beds")`,
   },
   {
     id: 'polymorphism',
@@ -60,11 +93,25 @@ const CONCEPTS: Concept[] = [
     borderColor: 'border-violet-200',
     textColor: 'text-violet-700',
     badgeColor: 'bg-violet-100 text-violet-700 border-violet-200',
-    summary: 'The same Enum type is used across multiple model columns — each column shares validation and serialisation behaviour while holding a different concrete member value at runtime.',
-    file: 'backend/app/models/enums.py',
-    element: 'InstitutionType, ReportStatus, SeverityLevel',
-    description: 'A single set of Enum subclasses is used as a polymorphic type across Institution.type, CommunityReport.status, CommunityReport.severity, and ReliefAssignment columns. FastAPI\'s serialiser calls .value on whichever enum member is present at runtime — no branching required.',
-    snippet: 'class InstitutionType(str, Enum):\n    SCHOOL = "school"\n    COLLEGE = "college"\n    NGO = "ngo"\n\nclass SeverityLevel(str, Enum):\n    MODERATE = "MODERATE"\n    SEVERE   = "SEVERE"\n    CRITICAL = "CRITICAL"',
+    summary: 'Different classes implement the same method interface, allowing runtime dynamic dispatch over collections without conditional branching.',
+    file: 'Domain Model: Dynamic Contact Protocol',
+    element: 'inst.contact_team() Dynamic Dispatch',
+    description: 'Both School and NGO classes implement their own contact_team() method. When iterating through a mixed list of institutions, Python dynamically executes the appropriate class implementation at runtime.',
+    snippet: `class School(Institution):
+    def contact_team(self):
+        print(f"Calling Headmaster at {self.name}...")
+
+class NGO(Institution):
+    def contact_team(self):
+        print(f"Calling Relief Dispatch Coordinator at {self.name}...")
+
+# Dynamic runtime dispatch across heterogeneous objects
+verification_points = [
+    School("Sonagazi Model High", "Feni", 850, 14),
+    NGO("BDRCS Sonagazi Unit", "Feni", 500)
+]
+for inst in verification_points:
+    inst.contact_team()  # Polymorphic invocation without if/else`,
   },
   {
     id: 'abstraction',
@@ -75,11 +122,30 @@ const CONCEPTS: Concept[] = [
     borderColor: 'border-amber-200',
     textColor: 'text-amber-700',
     badgeColor: 'bg-amber-100 text-amber-700 border-amber-200',
-    summary: 'Complex implementation details are hidden behind a simple interface — callers work with a clean method or component without knowing the internal logic.',
-    file: 'backend/app/services/gap_service.py',
-    element: 'GapDetectionService',
-    description: 'The entire gap detection algorithm — PostGIS spatial queries, cross-referencing verified reports against active assignments, severity weighting, and coverage scoring — is hidden inside a service class. API route handlers call a single method and receive structured results with no SQL knowledge required.',
-    snippet: '# In the API route handler:\ngaps = gap_service.detect_coverage_gaps(\n    db=db,\n    district="Feni",\n    radius_km=10\n)\n# All PostGIS queries, joins, and scoring happen internally',
+    summary: 'Abstract base classes enforce structural contracts and template methods, hiding complex internal cargo calculations and route validation from callers.',
+    file: 'Domain Model: Relief Operations Pipeline',
+    element: 'class ReliefOperation(ABC)',
+    description: 'ReliefOperation is an Abstract Base Class (ABC) with an abstract calculate_cargo() method and a concrete dispatch() template method. Callers invoke dispatch() without needing to understand the underlying cargo math.',
+    snippet: `from abc import ABC, abstractmethod
+
+class ReliefOperation(ABC):
+    def __init__(self, destination: str, target_households: int):
+        self.destination = destination
+        self.households = target_households
+
+    @abstractmethod
+    def calculate_cargo(self) -> dict:
+        """Enforced interface: subclasses must compute cargo specs"""
+        pass
+
+    def dispatch(self):
+        # Caller only invokes dispatch(); complex computation is abstracted
+        cargo = self.calculate_cargo()
+        print(f"Dispatched relief to {self.destination}: {cargo}")
+
+class FloodReliefOperation(ReliefOperation):
+    def calculate_cargo(self) -> dict:
+        return {"food_packs": self.households * 2, "water_liters": self.households * 10}`,
   },
   {
     id: 'multithreading',
@@ -90,11 +156,26 @@ const CONCEPTS: Concept[] = [
     borderColor: 'border-sky-200',
     textColor: 'text-sky-700',
     badgeColor: 'bg-sky-100 text-sky-700 border-sky-200',
-    summary: 'The server handles multiple simultaneous requests without blocking, using Python\'s async/await cooperative concurrency model on Uvicorn\'s ASGI event loop.',
-    file: 'backend/app/main.py',
-    element: 'async def add_process_time_header()',
-    description: 'Every incoming HTTP request is handled as an async coroutine. FastAPI delegates to Uvicorn which runs an event loop — multiple requests from different field operators are processed concurrently without one blocking another. The middleware measures each request\'s wall-clock time independently.',
-    snippet: '@app.middleware("http")\nasync def add_process_time_header(request: Request, call_next):\n    start_time = time.time()\n    response = await call_next(request)  # non-blocking\n    ms = (time.time() - start_time) * 1000\n    response.headers["X-Process-Time-Ms"] = f"{ms:.2f}"\n    return response',
+    summary: 'Concurrent worker threads parse, validate, and ingest high-volume incoming distress SMS messages simultaneously without blocking the main event loop.',
+    file: 'SMS Ingestion Engine: Parallel Worker Threads',
+    element: 'ThreadPoolExecutor / Worker Threads',
+    description: 'During a flood crisis, hundreds of SMS messages arrive per minute. ThreadPoolExecutor distributes the computationally heavy Bangla text normalization, regex location extraction, and urgency scoring across concurrent worker threads.',
+    snippet: `import concurrent.futures
+from backend.app.sms.parser import parse_sms_report
+
+def process_sms_worker(sms: dict) -> dict:
+    """Thread worker: parses text & extracts entities independently"""
+    return parse_sms_report(sender=sms["phone"], raw_message=sms["text"])
+
+# Concurrent batch SMS ingestion across worker threads
+incoming_batch = [
+    {"phone": "+8801711...", "text": "সোনাগাজী ৩ ফুট পানি খাবার দরকার"},
+    {"phone": "+8801822...", "text": "ফুলগাজী জরুরি নৌকা ও স্যালাইন চাই"},
+    {"phone": "+8801933...", "text": "পরশুরাম ২০ পরিবার পানিবন্দী"}
+]
+
+with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+    results = list(executor.map(process_sms_worker, incoming_batch))`,
   },
   {
     id: 'exceptions',
@@ -105,11 +186,30 @@ const CONCEPTS: Concept[] = [
     borderColor: 'border-rose-200',
     textColor: 'text-rose-700',
     badgeColor: 'bg-rose-100 text-rose-700 border-rose-200',
-    summary: 'Exceptions are caught at multiple layers — startup, per-request middleware, and inside parsers — so a single failure never brings down the whole system.',
-    file: 'backend/app/main.py',
-    element: 'lifespan() + global HTTP middleware',
-    description: 'The startup lifespan uses try/except/finally: seeding failures are logged but do not prevent the server from starting, and the finally block always closes the DB session. The HTTP middleware wraps every request in try/except — unhandled exceptions are logged with full traceback and the client receives a clean 500 JSON instead of a raw crash.',
-    snippet: '# Startup: try/except/finally\ntry:\n    seed_geographic_data_if_empty(db, data_dir="data")\nexcept Exception as e:\n    logger.error(f"Seeding failed: {e}", exc_info=True)\nfinally:\n    db.close()   # always runs\n\n# Per-request: catch-all middleware\nexcept Exception as exc:\n    logger.error(str(exc), exc_info=True)\n    return JSONResponse(status_code=500, ...)',
+    summary: 'Custom domain exceptions prevent illegal dispatches, with try-catch-finally blocks ensuring audit trail integrity and automatic emergency fallback routing.',
+    file: 'Error Safety: Custom Exceptions & Fallback Handling',
+    element: 'Custom Exceptions & Try-Except-Finally',
+    description: 'Custom exceptions (UnverifiedAreaException, RoadSubmergedException) protect critical business invariants. Catch blocks activate boat rerouting when roads are submerged, while finally blocks guarantee audit log writes.',
+    snippet: `# Custom Domain Exceptions
+class UnverifiedAreaException(Exception):
+    """Raised when dispatch is attempted on an unverified report"""
+    pass
+
+class RoadSubmergedException(Exception):
+    """Raised when primary transit highway is flooded"""
+    pass
+
+# Safe Execution with Fallback & Guaranteed Audit Logging
+try:
+    if not report.is_verified:
+        raise UnverifiedAreaException("Ground verification required before dispatch")
+    validate_road_transit(destination)
+except RoadSubmergedException:
+    print("Highway submerged: Rerouting convoy via Army Rescue Boats")
+except UnverifiedAreaException as e:
+    logger.error(f"Dispatch blocked: {e}")
+finally:
+    db.commit()  # Guaranteed audit trail logging`,
   },
 ];
 
