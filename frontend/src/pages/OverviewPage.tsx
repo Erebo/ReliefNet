@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   MessageSquare, ShieldCheck, Package, Truck, CheckCircle2,
   Clock, AlertTriangle, ChevronRight, MapPin, ArrowRight,
-  ChevronDown, Circle, Play, RefreshCw, Cpu, AlertOctagon,
-  Anchor, X, ExternalLink
+  ChevronDown, Circle, Play, RefreshCw, Cpu,
+  X, ExternalLink
 } from 'lucide-react';
 
 import { useScenario } from '../context/ScenarioContext';
@@ -210,10 +210,6 @@ export const OverviewPage: React.FC = () => {
   const [threadLogs, setThreadLogs] = useState<string[]>([]);
   const [showThreadPanel, setShowThreadPanel] = useState(false);
 
-  // Error Handling Modals & Toasts
-  const [errorModal, setErrorModal] = useState<{ title: string; type: string; message: string; resolution: string } | null>(null);
-  const [fallbackToast, setFallbackToast] = useState<string | null>(null);
-
   const scenario = FLOOD_SCENARIOS.find(s => s.id === activeScenarioId) || FLOOD_SCENARIOS[0];
   const smsMessages = smsData[activeScenarioId] || [];
   const reliefList   = reliefData[activeScenarioId] || [];
@@ -280,22 +276,6 @@ export const OverviewPage: React.FC = () => {
     }, 1800);
   };
 
-  // 2. Error Handling Simulation: Unverified Dispatch Attempt
-  const handleTriggerUnverifiedError = () => {
-    setErrorModal({
-      type: 'UnverifiedAreaException (Checked Exception)',
-      title: 'Relief Dispatch Blocked by System Rule',
-      message: "Attempted to dispatch relief convoy to an area with status 'PENDING'. Business rule prohibits dispatch without ground truth verification.",
-      resolution: 'Resolve by clicking the location on the map to contact the local School/College/NGO and verify ground conditions.'
-    });
-  };
-
-  // 3. Error Handling Simulation: Submerged Highway -> Boat Fallback
-  const handleTriggerRoadSubmergedError = () => {
-    setFallbackToast('RoadSubmergedException: Main highway submerged under 4.5ft floodwater! Auto-fallback activated: Dispatching Army Rescue Boats.');
-    setTimeout(() => setFallbackToast(null), 6000);
-  };
-
   // 4. Verification Action
   const handleVerifyMessage = (id: number, areaName: string, lat?: number, lon?: number, instId?: number) => {
     setSmsData(prev => ({
@@ -326,23 +306,6 @@ export const OverviewPage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto py-6 px-4 space-y-7">
-
-      {/* ── Submerged Road Fallback Toast ───────────────────────────── */}
-      {fallbackToast && (
-        <div className="bg-amber-900 border-2 border-amber-400 text-white px-4 py-3 rounded-xl shadow-2xl flex items-start gap-3 animate-in fade-in duration-200">
-          <Anchor className="w-5 h-5 text-amber-300 flex-shrink-0 mt-0.5" />
-          <div className="flex-1 text-xs">
-            <div className="font-bold text-amber-200 flex items-center gap-2">
-              <span>⚠ RoadSubmergedException Handled</span>
-              <span className="bg-amber-400 text-amber-950 font-black text-[9px] px-1.5 py-0.5 rounded">REROUTED</span>
-            </div>
-            <p className="mt-0.5 text-amber-100">{fallbackToast}</p>
-          </div>
-          <button onClick={() => setFallbackToast(null)} className="text-amber-300 hover:text-white">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
 
       {/* ── Header ──────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200">
@@ -405,43 +368,23 @@ export const OverviewPage: React.FC = () => {
         </div>
       )}
 
-      {/* ── Scenario Picker & Error Handling Test Strip ─────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Active Flood Scenario Status (Synchronized with Response Map) */}
-        <div className={`flex items-center gap-3 px-4 py-2.5 bg-white border-2 ${scenario.border} rounded-xl shadow-sm`}>
-          <span className={`w-2.5 h-2.5 rounded-full ${scenario.badge} animate-pulse flex-shrink-0`} />
-          <div className="min-w-0">
-            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Active Response Zone</div>
-            <div className="text-xs font-black text-slate-900 flex items-center gap-1.5">
-              <span>{scenario.name}</span>
-              <span className="text-[10px] text-slate-500 font-medium">({scenario.district} · {scenario.severity})</span>
-            </div>
+      {/* ── Active Flood Scenario Status (Synchronized with Response Map) ── */}
+      <div className={`flex items-center gap-3 px-4 py-2.5 bg-white border-2 ${scenario.border} rounded-xl shadow-sm`}>
+        <span className={`w-2.5 h-2.5 rounded-full ${scenario.badge} animate-pulse flex-shrink-0`} />
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Active Response Zone</div>
+          <div className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+            <span>{scenario.name}</span>
+            <span className="text-[10px] text-slate-500 font-medium">({scenario.district} · {scenario.severity})</span>
           </div>
-          <button
-            onClick={() => navigate('/map')}
-            className="ml-2 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer flex-shrink-0"
-            title="Change active flood zone on Response Map"
-          >
-            Change on Map <ExternalLink className="w-3 h-3 text-slate-500" />
-          </button>
         </div>
-
-        {/* Live Java Exception Simulators */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-bold text-slate-400 uppercase">Test Java Exceptions:</span>
-          <button
-            onClick={handleTriggerUnverifiedError}
-            className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 rounded-lg text-[10px] font-bold transition-colors"
-          >
-            Trigger UnverifiedAreaException
-          </button>
-          <button
-            onClick={handleTriggerRoadSubmergedError}
-            className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 rounded-lg text-[10px] font-bold transition-colors"
-          >
-            Trigger RoadSubmergedException
-          </button>
-        </div>
+        <button
+          onClick={() => navigate('/map')}
+          className="ml-2 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer flex-shrink-0"
+          title="Change active flood zone on Response Map"
+        >
+          Change on Map <ExternalLink className="w-3 h-3 text-slate-500" />
+        </button>
       </div>
 
       {/* ── Pipeline Summary KPIs ────────────────────────────────────── */}
@@ -618,43 +561,6 @@ export const OverviewPage: React.FC = () => {
           })}
         </div>
       </section>
-
-      {/* ── Error Handling Modal (Checked Exception Demonstration) ──── */}
-      {errorModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border-2 border-red-500 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-red-100 text-red-600 rounded-xl flex-shrink-0">
-                <AlertOctagon className="w-6 h-6" />
-              </div>
-              <div>
-                <span className="text-[10px] font-mono font-bold text-red-600 uppercase bg-red-50 px-2 py-0.5 rounded border border-red-200">
-                  {errorModal.type}
-                </span>
-                <h3 className="text-base font-black text-slate-900 mt-1">{errorModal.title}</h3>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-200">
-              {errorModal.message}
-            </p>
-
-            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800">
-              <strong className="block font-bold mb-0.5 text-emerald-950">Resolution / Recovery:</strong>
-              {errorModal.resolution}
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => setErrorModal(null)}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors"
-              >
-                Acknowledge Exception
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );
