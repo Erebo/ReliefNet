@@ -23,17 +23,15 @@ logger = logging.getLogger("reliefnet")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Ensure tables are created and seed data if empty
-    logger.info("Initializing ReliefNet database schema...")
+    logger.info("Initializing ReliefNet database schema and foundation data...")
     Base.metadata.create_all(bind=engine)
 
-    # Seed GIS and institutional foundation
-    db = SessionLocal()
     try:
-        seed_geographic_data_if_empty(db, data_dir="data")
+        from scripts.seed_demo_data import seed_demo_scenario
+        seed_demo_scenario()
+        logger.info("Database initial seed verified successfully.")
     except Exception as e:
-        logger.error(f"Error seeding geographic data: {e}", exc_info=True)
-    finally:
-        db.close()
+        logger.error(f"Error seeding database scenario: {e}", exc_info=True)
 
     logger.info("ReliefNet platform ready.")
     yield
