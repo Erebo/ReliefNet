@@ -31,6 +31,14 @@
 }
 
 /* MapLibre Clean Institutional Popups & Controls */
+.maplibregl-marker {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  will-change: transform;
+  pointer-events: auto;
+}
+
 .maplibregl-popup-content {
   background: #ffffff !important;
   color: #0f172a !important;

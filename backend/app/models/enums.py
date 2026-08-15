@@ -52,6 +52,7 @@ class ReportSource(str, enum.Enum):
 class SeverityLevel(str, enum.Enum):
     CRITICAL = "CRITICAL"
     SEVERE = "SEVERE"
+    HIGH = "HIGH"
     MODERATE = "MODERATE"
     LOW = "LOW"
 

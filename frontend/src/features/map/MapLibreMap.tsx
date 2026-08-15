@@ -285,6 +285,9 @@ export const MapLibreMap: React.FC<MapProps> = ({
       },
       center: [startLon, startLat],
       zoom: startZoom,
+      minZoom: 4.5,
+      maxZoom: 18,
+      renderWorldCopies: false,
       attributionControl: false,
     });
 
@@ -348,9 +351,9 @@ export const MapLibreMap: React.FC<MapProps> = ({
 
     const scenario = FLOOD_SCENARIOS.find(s => s.id === activeScenarioId) || FLOOD_SCENARIOS[0];
 
-    // 🔴 Red area badge pin at center
+    // 🔴 Red area badge pin at center (absolute positioning so it stays fixed to coordinates)
     const redPin = document.createElement('div');
-    redPin.className = 'cursor-pointer flex flex-col items-center select-none z-20 group';
+    redPin.className = 'absolute top-0 left-0 cursor-pointer flex flex-col items-center select-none z-20 group';
     redPin.innerHTML = `
       <div class="px-3 py-1.5 bg-red-600 border-2 border-white text-white rounded-lg text-xs font-black tracking-wide shadow-2xl flex items-center gap-2 group-hover:scale-110 group-hover:bg-red-700 transition-all">
         <span class="relative flex h-3 w-3">
@@ -367,7 +370,7 @@ export const MapLibreMap: React.FC<MapProps> = ({
       setIsOverlayOpen(true);
     });
 
-    areaMarkerRef.current = new maplibregl.Marker({ element: redPin })
+    areaMarkerRef.current = new maplibregl.Marker({ element: redPin, anchor: 'bottom', subpixelPositioning: true })
       .setLngLat([scenario.center.lon, scenario.center.lat])
       .addTo(map.current!);
 
@@ -375,7 +378,7 @@ export const MapLibreMap: React.FC<MapProps> = ({
     institutions.forEach(inst => {
       const el = document.createElement('div');
       const isSelected = selectedInst?.id === inst.id;
-      el.className = 'cursor-pointer group relative flex items-center justify-center p-3 z-30';
+      el.className = 'absolute top-0 left-0 cursor-pointer group flex items-center justify-center p-3 z-30';
       
       if (isSelected) {
         el.innerHTML = `
@@ -401,7 +404,7 @@ export const MapLibreMap: React.FC<MapProps> = ({
         `;
       } else {
         el.innerHTML = `
-          <div class="w-5 h-5 rounded-full bg-emerald-500 border-2 border-white shadow-xl group-hover:scale-150 group-hover:bg-emerald-600 transition-all flex items-center justify-center">
+          <div class="relative w-5 h-5 rounded-full bg-emerald-500 border-2 border-white shadow-xl group-hover:scale-150 group-hover:bg-emerald-600 transition-all flex items-center justify-center">
             <div class="w-1.5 h-1.5 rounded-full bg-white"></div>
           </div>
           <div class="absolute bottom-full mb-2 hidden group-hover:block bg-slate-900 text-white text-[11px] font-semibold px-2.5 py-1 rounded shadow-2xl whitespace-nowrap z-30 pointer-events-none">
@@ -419,7 +422,7 @@ export const MapLibreMap: React.FC<MapProps> = ({
         map.current?.flyTo({ center: [inst.longitude, inst.latitude], zoom: 14.5, essential: true });
       });
 
-      const marker = new maplibregl.Marker({ element: el })
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center', subpixelPositioning: true })
         .setLngLat([inst.longitude, inst.latitude])
         .addTo(map.current!);
       markersRef.current.push(marker);

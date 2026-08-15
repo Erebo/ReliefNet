@@ -4,10 +4,10 @@ import { MapLibreMap } from '../features/map/MapLibreMap';
 
 export const MapPage: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const lat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : 22.8485;
-  const lon = searchParams.get('lon') ? parseFloat(searchParams.get('lon')!) : 91.3912;
-  const zoom = searchParams.get('zoom') ? parseFloat(searchParams.get('zoom')!) : 13.5;
-  const scenario = searchParams.get('scenario') || 'feni';
+  const lat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : undefined;
+  const lon = searchParams.get('lon') ? parseFloat(searchParams.get('lon')!) : undefined;
+  const zoom = searchParams.get('zoom') ? parseFloat(searchParams.get('zoom')!) : undefined;
+  const scenario = searchParams.get('scenario') || undefined;
   const instId = searchParams.get('instId') ? parseInt(searchParams.get('instId')!) : undefined;
   const area = searchParams.get('area') || undefined;
 
