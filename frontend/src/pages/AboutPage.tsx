@@ -287,7 +287,7 @@ export const AboutPage: React.FC = () => {
         <div className="flex-1 h-px bg-slate-200" />
         <div className="flex items-center gap-2 px-3">
           <Zap className="w-3.5 h-3.5 text-slate-500" />
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Concept Breakdown</span>
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Concepts used</span>
         </div>
         <div className="flex-1 h-px bg-slate-200" />
       </div>
