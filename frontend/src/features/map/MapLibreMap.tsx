@@ -13,11 +13,13 @@ import {
   Crosshair,
   ChevronRight,
   AlertTriangle,
+  Send,
 } from 'lucide-react';
 import { Institution, FloodSimulation, ReliefAssignment, ReliefProvider } from '../../types';
 import { apiClient } from '../../api/client';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { useScenario } from '../../context/ScenarioContext';
+import { useMapState } from '../../context/MapStateContext';
 
 interface MapProps {
   initialLat?: number;
@@ -148,6 +150,39 @@ export const MapLibreMap: React.FC<MapProps> = ({
   initialArea,
 }) => {
   const { activeScenarioId, setActiveScenarioId } = useScenario();
+  const {
+    mapViewState,
+    setMapViewState,
+    panelMode,
+    setPanelMode,
+    selectedInst,
+    setSelectedInst,
+    targetedPlaceName,
+    setTargetedPlaceName,
+    isOverlayOpen,
+    setIsOverlayOpen,
+    activeAssignment,
+    setActiveAssignment,
+    verifyCondition,
+    setVerifyCondition,
+    verifyNeeds,
+    setVerifyNeeds,
+    verifyPeople,
+    setVerifyPeople,
+    verifyChildren,
+    setVerifyChildren,
+    verifyNotes,
+    setVerifyNotes,
+    selectedProviderId,
+    setSelectedProviderId,
+    foodQuantity,
+    setFoodQuantity,
+    waterQuantity,
+    setWaterQuantity,
+    medQuantity,
+    setMedQuantity,
+  } = useMapState();
+
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreInstance | null>(null);
   const markersRef = useRef<Marker[]>([]);
@@ -160,31 +195,13 @@ export const MapLibreMap: React.FC<MapProps> = ({
   // Local institutions from active scenario
   const [institutions, setInstitutions] = useState<any[]>(activeScenario.institutions);
   const [providers, setProviders] = useState<ReliefProvider[]>([]);
-  const [activeAssignment, setActiveAssignment] = useState<ReliefAssignment | null>(null);
 
   const initialTargetInst = initialInstId 
     ? activeScenario.institutions.find(i => i.id === initialInstId)
     : null;
 
-  const [selectedInst, setSelectedInst] = useState<any | null>(initialTargetInst || null);
-  const [targetedPlaceName, setTargetedPlaceName] = useState<string | undefined>(initialArea);
-  const [panelMode, setPanelMode] = useState<PanelMode>(initialTargetInst ? 'INSTITUTION_DETAILS' : 'AREA_OVERVIEW');
-  const [isOverlayOpen, setIsOverlayOpen] = useState(true);
-
-  // Form state
-  const [verifyCondition, setVerifyCondition] = useState('SEVERELY_FLOODED');
-  const [verifyNeeds, setVerifyNeeds] = useState<string[]>(['Food', 'Drinking Water', 'Medicine']);
-  const [verifyPeople, setVerifyPeople] = useState(550);
-  const [verifyHouseholds, setVerifyHouseholds] = useState(142);
-  const [verifyNotes, setVerifyNotes] = useState('');
   const [submittingVerify, setSubmittingVerify] = useState(false);
-
-  const [selectedProviderId, setSelectedProviderId] = useState(1);
-  const [foodQuantity, setFoodQuantity] = useState(300);
-  const [waterQuantity, setWaterQuantity] = useState(500);
-  const [medQuantity, setMedQuantity] = useState(50);
   const [submittingAssign, setSubmittingAssign] = useState(false);
-
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   // Sync initial props from URL navigation
@@ -233,6 +250,11 @@ export const MapLibreMap: React.FC<MapProps> = ({
     setTargetedPlaceName(undefined);
     setPanelMode('AREA_OVERVIEW');
     setIsOverlayOpen(true);
+    setMapViewState({
+      lat: scenario.center.lat,
+      lon: scenario.center.lon,
+      zoom: scenario.center.zoom,
+    });
 
     // Fly to the new area
     map.current.flyTo({
@@ -261,9 +283,9 @@ export const MapLibreMap: React.FC<MapProps> = ({
   useEffect(() => {
     if (!mapContainer.current) return;
 
-    const startLat = initialLat ?? (initialTargetInst ? initialTargetInst.latitude : activeScenario.center.lat);
-    const startLon = initialLon ?? (initialTargetInst ? initialTargetInst.longitude : activeScenario.center.lon);
-    const startZoom = initialZoom ?? (initialTargetInst ? 14.2 : activeScenario.center.zoom);
+    const startLat = initialLat ?? (initialTargetInst ? initialTargetInst.latitude : (mapViewState ? mapViewState.lat : activeScenario.center.lat));
+    const startLon = initialLon ?? (initialTargetInst ? initialTargetInst.longitude : (mapViewState ? mapViewState.lon : activeScenario.center.lon));
+    const startZoom = initialZoom ?? (initialTargetInst ? 14.2 : (mapViewState ? mapViewState.zoom : activeScenario.center.zoom));
 
     const mapInstance = new maplibregl.Map({
       container: mapContainer.current,
@@ -315,6 +337,15 @@ export const MapLibreMap: React.FC<MapProps> = ({
         type: 'line',
         source: 'flood-zones',
         paint: { 'line-color': '#dc2626', 'line-width': 3 },
+      });
+
+      mapInstance.on('moveend', () => {
+        const center = mapInstance.getCenter();
+        setMapViewState({
+          lat: center.lat,
+          lon: center.lng,
+          zoom: mapInstance.getZoom(),
+        });
       });
 
       if (initialTargetInst) {
@@ -440,7 +471,7 @@ export const MapLibreMap: React.FC<MapProps> = ({
         upazila: activeScenario.affected_upazilas[0],
         district: activeScenario.district,
         reported_condition: verifyCondition,
-        people_sheltered_est: verifyPeople,
+        people_sheltered_est: verifyPeople + verifyChildren,
         verifier_notes: verifyNotes,
         contact_phone: selectedInst.phone,
       }).catch(() => {});
@@ -453,12 +484,14 @@ export const MapLibreMap: React.FC<MapProps> = ({
   const handleAssignRelief = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmittingAssign(true);
+    const totalPeople = verifyPeople + verifyChildren;
+    const estHouseholds = Math.max(1, Math.round(totalPeople / 4));
     try {
       const res = await apiClient.post<ReliefAssignment>('/assignments', {
         provider_id: selectedProviderId,
         destination_district: activeScenario.district,
         destination_upazila: activeScenario.affected_upazilas[0],
-        target_households: verifyHouseholds,
+        target_households: estHouseholds,
         priority: 'HIGH',
         allocated_resources: JSON.stringify([
           { category: 'FOOD', item_name: 'Emergency Food Packs', quantity: foodQuantity, unit: 'packages' },
@@ -466,7 +499,7 @@ export const MapLibreMap: React.FC<MapProps> = ({
           { category: 'MEDICINE', item_name: 'First Aid Kits', quantity: medQuantity, unit: 'kits' },
         ]),
       }).catch(() => ({
-        data: { id: 1, status: 'ASSIGNED', provider_name: 'BDRCS Relief Team', target_households: verifyHouseholds } as ReliefAssignment
+        data: { id: 1, status: 'ASSIGNED', provider_name: 'BDRCS Relief Team', target_households: estHouseholds } as ReliefAssignment
       }));
       setActiveAssignment(res.data);
       setPanelMode('TRACK_OPERATION');
@@ -482,10 +515,12 @@ export const MapLibreMap: React.FC<MapProps> = ({
 
   const handleCompleteDelivery = async () => {
     if (!activeAssignment) return;
+    const totalPeople = verifyPeople + verifyChildren;
+    const estHouseholds = Math.max(1, Math.round(totalPeople / 4));
     await apiClient.post('/deliveries', {
       assignment_id: activeAssignment.id,
-      people_served: verifyPeople,
-      households_served: verifyHouseholds,
+      people_served: totalPeople,
+      households_served: estHouseholds,
       distribution_point: selectedInst?.name || `${activeScenario.district} Distribution Centre`,
       status: 'DELIVERED',
       items: [
@@ -644,8 +679,8 @@ export const MapLibreMap: React.FC<MapProps> = ({
                   {panelMode === 'AREA_OVERVIEW' && <><span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" /><span>Flood Area Overview</span></>}
                   {panelMode === 'INSTITUTION_DETAILS' && <><span className="w-2 h-2 rounded-full bg-emerald-400" /><span>Contact & Verify</span></>}
                   {panelMode === 'VERIFY_FORM' && <><ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /><span>Record Verification</span></>}
-                  {panelMode === 'ASSIGN_RELIEF' && <><Truck className="w-3.5 h-3.5 text-sky-400" /><span>Assign Relief Provider</span></>}
-                  {panelMode === 'TRACK_OPERATION' && <><Package className="w-3.5 h-3.5 text-sky-400" /><span>Live Convoy Tracker</span></>}
+                  {panelMode === 'ASSIGN_RELIEF' && <><Send className="w-3.5 h-3.5 text-sky-400" /><span>Notify Relief Provider</span></>}
+                  {panelMode === 'TRACK_OPERATION' && <><ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /><span>Provider Notified</span></>}
                 </div>
                 <div className="text-[10px] text-slate-400 truncate">
                   {selectedInst?.name || `${activeScenario.district} — ${activeScenario.severity}`}
@@ -805,15 +840,15 @@ export const MapLibreMap: React.FC<MapProps> = ({
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-slate-800 font-bold mb-1">People</label>
-                    <input type="number" min="1" required value={verifyPeople}
+                    <label className="block text-slate-800 font-bold mb-1">People (above 18)</label>
+                    <input type="number" min="0" required value={verifyPeople}
                       onChange={e => setVerifyPeople(parseInt(e.target.value) || 0)}
                       className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono text-slate-900 text-xs" />
                   </div>
                   <div>
-                    <label className="block text-slate-800 font-bold mb-1">Households</label>
-                    <input type="number" min="1" required value={verifyHouseholds}
-                      onChange={e => setVerifyHouseholds(parseInt(e.target.value) || 0)}
+                    <label className="block text-slate-800 font-bold mb-1">Children (below 18)</label>
+                    <input type="number" min="0" required value={verifyChildren}
+                      onChange={e => setVerifyChildren(parseInt(e.target.value) || 0)}
                       className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono text-slate-900 text-xs" />
                   </div>
                 </div>
@@ -841,7 +876,7 @@ export const MapLibreMap: React.FC<MapProps> = ({
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Ground Verification Completed
                   </div>
                   <div className="text-[11px] text-emerald-700 mt-0.5">
-                    {activeScenario.district} • {verifyHouseholds} Households • {verifyPeople} People
+                    {activeScenario.district} • {verifyPeople} People (above 18) • {verifyChildren} Children (below 18)
                   </div>
                 </div>
 
@@ -881,8 +916,8 @@ export const MapLibreMap: React.FC<MapProps> = ({
 
                 <button type="submit" disabled={submittingAssign}
                   className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-colors">
-                  <Truck className="w-4 h-4 text-sky-400" />
-                  {submittingAssign ? 'Dispatching…' : 'Dispatch Relief Convoy'}
+                  <Send className="w-4 h-4 text-sky-400" />
+                  {submittingAssign ? 'Notifying Provider…' : 'Notify Provider'}
                 </button>
               </form>
             )}
@@ -892,23 +927,8 @@ export const MapLibreMap: React.FC<MapProps> = ({
               <div className="space-y-3.5">
                 <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-900">Operation #{activeAssignment?.id || 1}</span>
-                    <StatusBadge status={activeAssignment?.status || 'IN_TRANSIT'} size="sm" />
-                  </div>
-
-                  {/* 4-Step Progress */}
-                  <div className="grid grid-cols-4 gap-1 text-center text-[9px] font-bold">
-                    {[
-                      { label: '1. Assigned', active: ['ASSIGNED', 'PREPARING', 'DISPATCHED', 'IN_TRANSIT', 'DELIVERED'], color: 'bg-slate-900' },
-                      { label: '2. Dispatched', active: ['DISPATCHED', 'IN_TRANSIT', 'DELIVERED'], color: 'bg-blue-600' },
-                      { label: '3. In Transit', active: ['IN_TRANSIT', 'DELIVERED'], color: 'bg-blue-700' },
-                      { label: '4. Delivered', active: ['DELIVERED'], color: 'bg-emerald-600' },
-                    ].map(step => (
-                      <div key={step.label}
-                        className={`p-1.5 rounded-md transition-all ${step.active.includes(activeAssignment?.status || '') ? `${step.color} text-white` : 'bg-slate-200 text-slate-500'}`}>
-                        {step.label}
-                      </div>
-                    ))}
+                    <span className="text-xs font-bold text-slate-900">Provider Notified</span>
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">Active</span>
                   </div>
 
                   <div className="text-xs space-y-1 pt-1 border-t border-slate-200">
@@ -919,23 +939,20 @@ export const MapLibreMap: React.FC<MapProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  {activeAssignment?.status === 'ASSIGNED' && (
-                    <button onClick={() => handleAdvanceStatus('DISPATCHED')}
-                      className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-xs transition-colors">
-                      Mark as Dispatched
-                    </button>
-                  )}
-                  {activeAssignment?.status === 'DISPATCHED' && (
-                    <button onClick={() => handleAdvanceStatus('IN_TRANSIT')}
-                      className="w-full py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-lg font-bold text-xs transition-colors">
-                      Mark In Transit
-                    </button>
-                  )}
-                  {['DISPATCHED', 'IN_TRANSIT'].includes(activeAssignment?.status || '') && (
-                    <button onClick={handleCompleteDelivery}
-                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-colors">
-                      <CheckCircle2 className="w-4 h-4" /> Confirm Ground Delivery
-                    </button>
+                  {activeAssignment?.status !== 'DELIVERED' && (
+                    <>
+                      <a
+                        href={`tel:${selectedInst?.phone || '+880 1711-223344'}`}
+                        className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                      >
+                        <Phone className="w-3.5 h-3.5" /> Call Institution Now
+                      </a>
+
+                      <button onClick={handleCompleteDelivery}
+                        className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-colors">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Confirm Ground Delivery
+                      </button>
+                    </>
                   )}
                   {activeAssignment?.status === 'DELIVERED' && (
                     <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-center text-emerald-800 font-bold text-xs">

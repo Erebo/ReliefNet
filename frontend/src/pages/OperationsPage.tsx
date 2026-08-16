@@ -15,7 +15,8 @@ import {
   MapPin,
   Clock,
   Sparkles,
-  Search
+  Search,
+  Send
 } from 'lucide-react';
 import { apiClient } from '../api/client';
 import { ReliefAssignment, AssignmentStatus, ReliefProvider } from '../types';
@@ -193,7 +194,7 @@ export const OperationsPage: React.FC = () => {
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Certified humanitarian providers, live convoy logistics, cargo manifests, and verified ground distribution proof.
+            Certified humanitarian providers, live convoy logistics, and cargo manifests.
           </p>
         </div>
 
@@ -210,8 +211,8 @@ export const OperationsPage: React.FC = () => {
             onClick={() => setDispatchModalOpen(true)}
             className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md shadow-slate-900/10 hover:scale-105 transition-all"
           >
-            <Truck className="w-4 h-4 text-sky-400" />
-            <span>Dispatch New Convoy</span>
+            <Send className="w-4 h-4 text-sky-400" />
+            <span>Notify Provider</span>
           </button>
         </div>
       </div>
@@ -314,7 +315,7 @@ export const OperationsPage: React.FC = () => {
               Active Relief Convoys & Deliveries ({assignments.length})
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Live progression of relief speedboats and road convoys from dispatch to verified field handover.
+              Live progression of relief operations from notification to verified field handover.
             </p>
           </div>
 
@@ -330,7 +331,7 @@ export const OperationsPage: React.FC = () => {
               onClick={() => setActiveTab('ACTIVE')}
               className={`px-3 py-1 rounded-md font-bold transition-colors ${activeTab === 'ACTIVE' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
             >
-              Active En Route
+              Active Operations
             </button>
             <button
               onClick={() => setActiveTab('DELIVERED')}
@@ -345,7 +346,7 @@ export const OperationsPage: React.FC = () => {
           {filteredAssignments.length === 0 ? (
             <div className="p-8 bg-white border border-slate-200 rounded-xl text-center text-xs text-slate-400 space-y-2">
               <Truck className="w-6 h-6 text-slate-300 mx-auto" />
-              <div>No operations matching filter. Dispatch a new convoy from above or the Response Map.</div>
+              <div>No operations matching filter.</div>
             </div>
           ) : (
             filteredAssignments.map((asg) => {
@@ -379,66 +380,22 @@ export const OperationsPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Action Advancement Controls */}
+                    {/* Action Controls */}
                     <div className="flex items-center gap-2 self-start md:self-center">
-                      {asg.status === 'ASSIGNED' && (
-                        <button
-                          onClick={() => handleUpdateStatus(asg.id, 'PREPARING')}
-                          className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold shadow-sm transition-colors"
-                        >
-                          Mark Preparing
-                        </button>
-                      )}
-                      {asg.status === 'PREPARING' && (
-                        <button
-                          onClick={() => handleUpdateStatus(asg.id, 'DISPATCHED')}
-                          className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-sm transition-colors"
-                        >
-                          Mark Dispatched
-                        </button>
-                      )}
-                      {asg.status === 'DISPATCHED' && (
-                        <button
-                          onClick={() => handleUpdateStatus(asg.id, 'IN_TRANSIT')}
-                          className="px-3.5 py-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm transition-colors"
-                        >
-                          Mark In Transit
-                        </button>
-                      )}
-                      {['DISPATCHED', 'IN_TRANSIT', 'PREPARING'].includes(asg.status) && (
+                      {asg.status !== 'DELIVERED' ? (
                         <button
                           onClick={() => handleOpenDeliveryModal(asg)}
-                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"
+                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>Confirm Ground Delivery</span>
                         </button>
-                      )}
-                      {asg.status === 'DELIVERED' && (
+                      ) : (
                         <span className="text-xs text-emerald-700 font-bold flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-lg border border-emerald-200">
                           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                           <span>Delivered & Verified</span>
                         </span>
                       )}
-                    </div>
-                  </div>
-
-                  {/* 4-Step Interactive Progression Stepper */}
-                  <div className="space-y-1.5">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Operation Progression</div>
-                    <div className="grid grid-cols-4 gap-2 text-center text-xs font-bold">
-                      <div className={`p-2.5 rounded-lg transition-all ${['ASSIGNED', 'PREPARING', 'DISPATCHED', 'IN_TRANSIT', 'DELIVERED'].includes(asg.status) ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-400'}`}>
-                        1. Assigned
-                      </div>
-                      <div className={`p-2.5 rounded-lg transition-all ${['DISPATCHED', 'IN_TRANSIT', 'DELIVERED'].includes(asg.status) ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-400'}`}>
-                        2. Dispatched
-                      </div>
-                      <div className={`p-2.5 rounded-lg transition-all ${['IN_TRANSIT', 'DELIVERED'].includes(asg.status) ? 'bg-blue-700 text-white shadow-sm animate-pulse' : 'bg-slate-100 text-slate-400'}`}>
-                        3. In Transit
-                      </div>
-                      <div className={`p-2.5 rounded-lg transition-all ${asg.status === 'DELIVERED' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-400'}`}>
-                        4. Delivered
-                      </div>
                     </div>
                   </div>
 
@@ -540,11 +497,11 @@ export const OperationsPage: React.FC = () => {
         </form>
       </Modal>
 
-      {/* Modal: Quick Dispatch Convoy */}
+      {/* Modal: Quick Notify Provider */}
       <Modal
         isOpen={dispatchModalOpen}
         onClose={() => setDispatchModalOpen(false)}
-        title="Dispatch Humanitarian Relief Convoy"
+        title="Notify Humanitarian Relief Provider"
         subtitle="Match certified cargo supplies to a verified flood area."
       >
         <form onSubmit={handleCreateDispatch} className="space-y-4">
@@ -622,9 +579,10 @@ export const OperationsPage: React.FC = () => {
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold"
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer"
             >
-              {submitting ? 'Dispatching...' : 'Confirm & Dispatch'}
+              <Send className="w-3.5 h-3.5 text-sky-400" />
+              {submitting ? 'Notifying...' : 'Confirm & Notify'}
             </button>
           </div>
         </form>

@@ -392,8 +392,8 @@ export const OverviewPage: React.FC = () => {
         {[
           { icon: MessageSquare, label: 'SMS Ingested', value: smsMessages.length, sub: 'via Multi-threaded pool', color: 'text-indigo-600', bg: 'bg-indigo-50' },
           { icon: ShieldCheck,   label: 'Pending Verification', value: pendingCount, sub: 'needs ground check', color: 'text-orange-600', bg: 'bg-orange-50' },
-          { icon: AlertTriangle, label: 'Relief Need List', value: awaitingCount, sub: 'verified, awaiting convoy', color: 'text-red-600', bg: 'bg-red-50' },
-          { icon: Truck,         label: 'Convoys Active', value: dispatchedCount, sub: 'in transit / delivered', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { icon: AlertTriangle, label: 'Relief Need List', value: awaitingCount, sub: 'verified, awaiting relief', color: 'text-red-600', bg: 'bg-red-50' },
+          { icon: Truck,         label: 'Active Operations', value: dispatchedCount, sub: 'active / delivered', color: 'text-emerald-600', bg: 'bg-emerald-50' },
         ].map(k => (
           <div key={k.label} className="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-sm">
             <div className="flex items-center justify-between mb-2">
@@ -470,17 +470,17 @@ export const OverviewPage: React.FC = () => {
                     {sc.label}
                   </span>
 
-                  <div className="flex items-center gap-1.5">
-                    {/* Direct Location Verification on Map */}
-                    <button
-                      onClick={() => handleJumpToLocation(msg)}
-                      className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 transition-colors shadow-sm cursor-pointer"
-                      title="Jump to exact location on Map"
-                    >
-                      <MapPin className="w-3 h-3 text-red-400" /> Verify on Map
-                    </button>
+                  {msg.status === 'PENDING' && (
+                    <div className="flex items-center gap-1.5">
+                      {/* Direct Location Verification on Map */}
+                      <button
+                        onClick={() => handleJumpToLocation(msg)}
+                        className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 transition-colors shadow-sm cursor-pointer"
+                        title="Jump to exact location on Map"
+                      >
+                        <MapPin className="w-3 h-3 text-red-400" /> Verify on Map
+                      </button>
 
-                    {msg.status === 'PENDING' && (
                       <button
                         onClick={() => handleVerifyMessage(msg.id, msg.area, msg.lat, msg.lon, msg.institutionId)}
                         className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 transition-colors shadow-sm cursor-pointer"
@@ -488,8 +488,8 @@ export const OverviewPage: React.FC = () => {
                       >
                         <ShieldCheck className="w-3 h-3" /> Quick
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -515,9 +515,8 @@ export const OverviewPage: React.FC = () => {
 
         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
           <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 grid grid-cols-12 gap-2 text-[10px] font-black text-slate-500 uppercase tracking-wider">
-            <div className="col-span-4">Verified Location</div>
-            <div className="col-span-2 text-center">Households</div>
-            <div className="col-span-3">Urgent Needs</div>
+            <div className="col-span-5">Verified Location</div>
+            <div className="col-span-4">Urgent Needs</div>
             <div className="col-span-3 text-right">Relief Status</div>
           </div>
 
@@ -526,7 +525,7 @@ export const OverviewPage: React.FC = () => {
             return (
               <div key={row.id}
                 className={`px-4 py-3 grid grid-cols-12 gap-2 items-center text-xs transition-colors hover:bg-slate-50/80 ${i < reliefList.length - 1 ? 'border-b border-slate-100' : ''}`}>
-                <div className="col-span-4 flex items-center gap-2 min-w-0">
+                <div className="col-span-5 flex items-center gap-2 min-w-0">
                   <span className={`w-2 h-2 rounded-full ${sc.dot} flex-shrink-0`} />
                   <button
                     onClick={() => row.lat && row.lon && navigate(`/map?scenario=${activeScenarioId}&lat=${row.lat}&lon=${row.lon}&zoom=14.5&instId=${row.institutionId}&area=${encodeURIComponent(row.area)}`)}
@@ -536,9 +535,7 @@ export const OverviewPage: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="col-span-2 text-center font-black text-slate-900 font-mono">~{row.households}</div>
-
-                <div className="col-span-3 flex flex-wrap gap-1">
+                <div className="col-span-4 flex flex-wrap gap-1">
                   {row.needs.map((nd: string) => (
                     <span key={nd} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[9px] font-medium">{nd}</span>
                   ))}
